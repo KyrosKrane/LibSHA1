@@ -1,11 +1,17 @@
--- $Revision: 1.5 $
--- $Date: 2014-09-10 16:54:25 $
-
 -- This module was originally taken from http://cube3d.de/uploads/Main/sha1.txt.
+-- That site no longer hosts that file.
+-- A copy was found on the Wayback Machine at:
+-- https://web.archive.org/web/20120814152019/http://cube3d.de:80/uploads/Main/sha1.txt
+-- A version of this was modularized by a company and posted at
+-- https://help.interfaceware.com/code/details/sha1-lua
+-- (without attribution!). It was adapted for use as a WoW addon library.
+-- Updates to WoW-compatible format by KyrosKrane Sylvanblade
+
+-- Copyright (c) 2013-2019 Enrique García Cota, Eike Decker, Jeffrey Friedl, iNTERFACEWARE, KyrosKrane Sylvanblade
 
 -------------------------------------------------------------------------------
 -- SHA-1 secure hash computation, and HMAC-SHA1 signature computation,
--- in pure Lua (tested on Lua 5.1)
+-- in pure Lua (tested on Lua 5.1) and WoW game version 8.2.5 and WoW Classic 1.13.2
 -- License: MIT
 --
 -- Usage:
@@ -50,11 +56,23 @@
 --
 -------------------------------------------------------------------------------
 
-sha1 = {}
+
+local sha1
+-- Check whether we're in World of Warcraft or not.
+if WOW_PROJECT_ID then
+  local MAJOR, MINOR = "sha1", 1
+  assert(LibStub, MAJOR .. " requires LibStub")
+
+  sha1 = LibStub:NewLibrary(MAJOR, MINOR)
+  if not sha1 then return end
+else
+	sha1 = {}
+end
+
 
 -- set this to false if you don't want to build several 64k sized tables when
 -- loading this file (takes a while but grants a boost of factor 13)
-local cfg_caching = not iguana.isTest()
+local cfg_caching = true
 
 -- local storing of global functions (minor speedup)
 local floor,modf = math.floor,math.modf
@@ -204,8 +222,29 @@ local function w32_add_n (a,...)
 	end
 	return a
 end
+
+-- unsigned 32 bit number (like bit.bxor returns) to hex
+-- Derived with permission from https://github.com/mooreatv/MoLib/blob/master/MoLib.lua#L498
+-- WoW's string.format will not work with 32-bit unsigned ints.
+local ML_ToHex = function (num)
+	local NumToHex = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"}
+	local r = {}
+	for x = 8, 1, -1 do
+	  local v = num % 16
+	  num = (num - v) / 16
+	  r[x] = NumToHex[v + 1]
+	end
+	return table.concat(r, "")
+  end
+
 -- converting the number to a hexadecimal string
-local function w32_to_hexstring (w) return format("%08x",w) end
+local function w32_to_hexstring (w)
+	if WOW_PROJECT_ID then
+		return ML_ToHex(w)
+	else
+		return format("%08x",w)
+	end
+end
 
 -- calculating the SHA1 for some text
 function sha1.hex(msg)
@@ -327,4 +366,7 @@ function sha1.hmacBin(key, text)
 	return hex_to_binary(sha1.hmacHex(key, text))
 end
 
-return sha1
+
+if not WOW_PROJECT_ID then
+	return sha1
+end
