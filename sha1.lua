@@ -1,42 +1,40 @@
+-- $Revision: 1.5 $
+-- $Date: 2014-09-10 16:54:25 $
+
+-- This module was originally taken from http://cube3d.de/uploads/Main/sha1.txt.
+
 -------------------------------------------------------------------------------
 -- SHA-1 secure hash computation, and HMAC-SHA1 signature computation,
 -- in pure Lua (tested on Lua 5.1)
 -- License: MIT
 --
 -- Usage:
---   local hash_as_hex   = sha1(message)            -- returns a hex string
---   local hash_as_data  = sha1_binary(message)     -- returns raw bytes
+-- local hashAsHex = sha1.hex(message) -- returns a hex string
+-- local hashAsData = sha1.bin(message) -- returns raw bytes
 --
---   local hmac_as_hex   = hmac_sha1(key, message)        -- hex string
---   local hmac_as_data  = hmac_sha1_binary(key, message) -- raw bytes
+-- local hmacAsHex = sha1.hmacHex(key, message) -- hex string
+-- local hmacAsData = sha1.hmacBin(key, message) -- raw bytes
 --
 --
--- Pass sha1() a string, and it returns a hash as a 40-character hex string.
+-- Pass sha1.hex() a string, and it returns a hash as a 40-character hex string.
 -- For example, the call
 --
---   local hash = sha1 "http://regex.info/blog/"
+-- local hash = sha1.hex("iNTERFACEWARE")
 --
 -- puts the 40-character string
 --
---   "7f103bf600de51dfe91062300c14738b32725db5"
+-- "e76705ffb88a291a0d2f9710a5471936791b4819"
 --
 -- into the variable 'hash'
 --
--- Pass sha1_hmac() a key and a message, and it returns the signature as a
+-- Pass sha1.hmacHex() a key and a message, and it returns the signature as a
 -- 40-byte hex string.
 --
 --
--- The two "_binary" versions do the same, but return the 20-byte string of raw
+-- The two "bin" versions do the same, but return the 20-byte string of raw
 -- data that the 40-byte hex strings represent.
 --
 -------------------------------------------------------------------------------
---
--- based on Jeffrey Friedl's implementation (which I found a bit too slow)
--- > jfriedl@yahoo.com
--- > http://regex.info/blog/
--- > Version 1 [May 28, 2009]
--- The original implementation is about 10 times slower, so you might prefer
--- this one.
 --
 -- Description
 -- Due to the lack of bitwise operations in 5.1, this version uses numbers to
@@ -46,18 +44,17 @@
 -- consumes some memory and time). The caching can be switched off through
 -- setting the local cfg_caching variable to false.
 -- For all binary operations, the 32 bit numbers are split into 8 bit values
--- that are are then combined and then merged again.
+-- that are combined and then merged again.
 --
 -- Algorithm: http://www.itl.nist.gov/fipspubs/fip180-1.htm
 --
---
+-------------------------------------------------------------------------------
 
--------------------------------------------------------------------------------
--------------------------------------------------------------------------------
+sha1 = {}
 
 -- set this to false if you don't want to build several 64k sized tables when
 -- loading this file (takes a while but grants a boost of factor 13)
-local cfg_caching = true
+local cfg_caching = not iguana.isTest()
 
 -- local storing of global functions (minor speedup)
 local floor,modf = math.floor,math.modf
@@ -128,30 +125,30 @@ end
 
 -- bitwise "and" function for 2 8bit number
 local band = cache2arg (function(a,b)
-	local A,B,C,D,E,F,G,H = byte_to_bits(b)
-	local a,b,c,d,e,f,g,h = byte_to_bits(a)
-	return bits_to_byte(
-		A and a, B and b, C and c, D and d,
-		E and e, F and f, G and g, H and h)
-end)
+		local A,B,C,D,E,F,G,H = byte_to_bits(b)
+		local a,b,c,d,e,f,g,h = byte_to_bits(a)
+		return bits_to_byte(
+			A and a, B and b, C and c, D and d,
+			E and e, F and f, G and g, H and h)
+	end)
 
 -- bitwise "or" function for 2 8bit numbers
 local bor = cache2arg(function(a,b)
-	local A,B,C,D,E,F,G,H = byte_to_bits(b)
-	local a,b,c,d,e,f,g,h = byte_to_bits(a)
-	return bits_to_byte(
-		A or a, B or b, C or c, D or d,
-		E or e, F or f, G or g, H or h)
-end)
+		local A,B,C,D,E,F,G,H = byte_to_bits(b)
+		local a,b,c,d,e,f,g,h = byte_to_bits(a)
+		return bits_to_byte(
+			A or a, B or b, C or c, D or d,
+			E or e, F or f, G or g, H or h)
+	end)
 
 -- bitwise "xor" function for 2 8bit numbers
 local bxor = cache2arg(function(a,b)
-	local A,B,C,D,E,F,G,H = byte_to_bits(b)
-	local a,b,c,d,e,f,g,h = byte_to_bits(a)
-	return bits_to_byte(
-		A ~= a, B ~= b, C ~= c, D ~= d,
-		E ~= e, F ~= f, G ~= g, H ~= h)
-end)
+		local A,B,C,D,E,F,G,H = byte_to_bits(b)
+		local a,b,c,d,e,f,g,h = byte_to_bits(a)
+		return bits_to_byte(
+			A ~= a, B ~= b, C ~= c, D ~= d,
+			E ~= e, F ~= f, G ~= g, H ~= h)
+	end)
 
 -- bitwise complement for one 8bit number
 local function bnot (x)
@@ -211,7 +208,7 @@ end
 local function w32_to_hexstring (w) return format("%08x",w) end
 
 -- calculating the SHA1 for some text
-function sha1(msg)
+function sha1.hex(msg)
 	local H0,H1,H2,H3,H4 = 0x67452301,0xEFCDAB89,0x98BADCFE,0x10325476,0xC3D2E1F0
 	local msg_len_in_bits = #msg * 8
 
@@ -222,13 +219,13 @@ function sha1(msg)
 	local second_append = current_mod>0 and rep(char(0), 64 - current_mod) or ""
 
 	-- now to append the length as a 64-bit number.
-	local B1, R1 = modf(msg_len_in_bits  / 0x01000000)
+	local B1, R1 = modf(msg_len_in_bits / 0x01000000)
 	local B2, R2 = modf( 0x01000000 * R1 / 0x00010000)
 	local B3, R3 = modf( 0x00010000 * R2 / 0x00000100)
-	local B4	  =	0x00000100 * R3
+	local B4 = 0x00000100 * R3
 
 	local L64 = char( 0) .. char( 0) .. char( 0) .. char( 0) -- high 32 bits
-				.. char(B1) .. char(B2) .. char(B3) .. char(B4) --  low 32 bits
+	.. char(B1) .. char(B2) .. char(B3) .. char(B4) -- low 32 bits
 
 	msg = msg .. first_append .. second_append .. L64
 
@@ -282,7 +279,7 @@ function sha1(msg)
 
 			-- TEMP = S5(A) + ft(B,C,D) + E + Wt + Kt;
 			A,B,C,D,E = w32_add_n(w32_rot(5, A), f, E, W[t], K),
-				A, w32_rot(30, B), C, D
+			A, w32_rot(30, B), C, D
 		end
 		-- Let H0 = H0 + A, H1 = H1 + B, H2 = H2 + C, H3 = H3 + D, H4 = H4 + E.
 		H0,H1,H2,H3,H4 = w32_add(H0, A),w32_add(H1, B),w32_add(H2, C),w32_add(H3, D),w32_add(H4, E)
@@ -293,12 +290,12 @@ end
 
 local function hex_to_binary(hex)
 	return hex:gsub('..', function(hexval)
-		return string.char(tonumber(hexval, 16))
-	end)
+			return string.char(tonumber(hexval, 16))
+		end)
 end
 
-function sha1_binary(msg)
-	return hex_to_binary(sha1(msg))
+function sha1.bin(msg)
+	return hex_to_binary(sha1.hex(msg))
 end
 
 local xor_with_0x5c = {}
@@ -312,20 +309,22 @@ end
 
 local blocksize = 64 -- 512 bits
 
-function hmac_sha1(key, text)
-	assert(type(key)  == 'string', "key passed to hmac_sha1 should be a string")
-	assert(type(text) == 'string', "text passed to hmac_sha1 should be a string")
+function sha1.hmacHex(key, text)
+	assert(type(key) == 'string', "key passed to hmacHex should be a string")
+	assert(type(text) == 'string', "text passed to hmacHex should be a string")
 
 	if #key > blocksize then
-		key = sha1_binary(key)
+		key = sha1.bin(key)
 	end
 
 	local key_xord_with_0x36 = key:gsub('.', xor_with_0x36) .. string.rep(string.char(0x36), blocksize - #key)
 	local key_xord_with_0x5c = key:gsub('.', xor_with_0x5c) .. string.rep(string.char(0x5c), blocksize - #key)
 
-	return sha1(key_xord_with_0x5c .. sha1_binary(key_xord_with_0x36 .. text))
+	return sha1.hex(key_xord_with_0x5c .. sha1.bin(key_xord_with_0x36 .. text))
 end
 
-function hmac_sha1_binary(key, text)
-	return hex_to_binary(hmac_sha1(key, text))
+function sha1.hmacBin(key, text)
+	return hex_to_binary(sha1.hmacHex(key, text))
 end
+
+return sha1
