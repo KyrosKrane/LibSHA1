@@ -1,13 +1,15 @@
--- This module was originally taken from http://cube3d.de/uploads/Main/sha1.txt.
--- That site no longer hosts that file.
--- A copy was found on the Wayback Machine at:
+-- Coding history:
+-- Original version by Jeffrey Friedl posted at:
+-- http://regex.info/blog/lua/sha1
+-- Performance update by Eike Decker (Zet) at:
+-- http://cube3d.de/uploads/Main/sha1.txt.
+-- That site no longer hosts that file.  A copy was found on the Wayback Machine at:
 -- https://web.archive.org/web/20120814152019/http://cube3d.de:80/uploads/Main/sha1.txt
--- A version of this was modularized by a company and posted at
+-- A version of this was modularized by a company and posted (without attribution!) at
 -- https://help.interfaceware.com/code/details/sha1-lua
--- (without attribution!). It was adapted for use as a WoW addon library.
--- Updates to WoW-compatible format by KyrosKrane Sylvanblade
+-- It was adapted for use as a WoW addon library by KyrosKrane Sylvanblade.
 
--- Copyright (c) 2013-2019 Enrique García Cota, Eike Decker, Jeffrey Friedl, iNTERFACEWARE, KyrosKrane Sylvanblade
+-- Copyright (c) 2009-2019 Jeffrey Friedl, Eike Decker, iNTERFACEWARE, KyrosKrane Sylvanblade
 
 -------------------------------------------------------------------------------
 -- SHA-1 secure hash computation, and HMAC-SHA1 signature computation,
