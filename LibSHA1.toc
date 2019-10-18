@@ -1,0 +1,9 @@
+## Interface: 80205
+## Title: LibSHA1
+## Version: @project-version@
+## Author: KyrosKrane Sylvanblade
+## Notes: Library to create SHA-1 hashes
+## Dependencies: LibStub
+
+# In this addon
+sha1.lua
