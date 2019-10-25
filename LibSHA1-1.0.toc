@@ -1,0 +1,20 @@
+# This TOC file should only be used to load the library for validation and benchmarking!
+# For use as a library, just load LibStub and the LibSHA1-1.0.xml file.
+
+## Interface: 80205
+## Title: LibSHA1-1.0 Test Harness
+## Version: v1
+## Author: KyrosKrane Sylvanblade
+## Notes: Test harness and benchmarking tool for LibSHA1-1.0 library
+
+# Externals
+LibStub\LibStub.lua
+
+# In this library
+LibSHA1-1.0.xml
+
+# Test harness executable
+WoW_Tests\validation.lua
+
+# Benchmarking functions
+WoW_Tests\benchmark.lua
